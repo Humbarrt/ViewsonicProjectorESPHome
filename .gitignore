@@ -1,0 +1,4 @@
+.vscode
+.venv
+.esphome
+__pycache__
