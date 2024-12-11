@@ -2,3 +2,4 @@
 .venv
 .esphome
 __pycache__
+*.private.*

@@ -1,13 +1,12 @@
 #include "esphome.h"
+#include "esphome/core/helpers.h"
 #include "viewsonic_projector.h"
-#include <mutex>
 
 namespace esphome
 {
     namespace viewsonic_projector
     {
         static const char *TAG = "empty_uart_component.component";
-        // std::mutex uart_mutex_; // Removed, now a member of ViewsonicProjectorComponent
         void ViewsonicProjectorComponent::setup()
         {
         }
@@ -51,7 +50,6 @@ namespace esphome
         std::string ViewsonicProjectorComponent::get_power_state()
         {
             PowerState state = _last_power_state;
-            std::lock_guard<std::mutex> lock(uart_mutex_);
             std::vector<uint8_t> response = _send_read("071400050034000011005e");
             if (response.empty())
             {
@@ -123,7 +121,7 @@ namespace esphome
 
         std::vector<uint8_t> ViewsonicProjectorComponent::_send_packet(const std::string &query, bool &error)
         {
-            std::lock_guard<std::mutex> lock(uart_mutex_);
+            uart_mutex_.lock();
             std::vector<uint8_t> query_bytes;
             for (size_t i = 0; i < query.length(); i += 2)
             {
@@ -150,6 +148,7 @@ namespace esphome
             {
                 ESP_LOGE(TAG, "Invalid checksum");
                 error = true;
+                uart_mutex_.unlock();
                 return {};
             }
 
@@ -160,6 +159,7 @@ namespace esphome
             {
                 ESP_LOGE(TAG, "Function is disabled");
                 error = true;
+                uart_mutex_.unlock();
                 return {};
             }
 
@@ -167,10 +167,12 @@ namespace esphome
             {
                 ESP_LOGE(TAG, "Projector is off");
                 error = true;
+                uart_mutex_.unlock();
                 return {};
             }
 
             error = false;
+            uart_mutex_.unlock();
             return response;
         }
 

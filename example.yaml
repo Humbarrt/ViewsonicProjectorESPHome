@@ -3,11 +3,11 @@ esphome:
     comment: Living room ESP32 controller
     area: Living Room
 
+rp2040:
+  board: rpipicow
+
 external_components:
   - source: components
-
-esp32:
-    board: nodemcu-32s
 
 uart:
   baud_rate: 115200
@@ -20,6 +20,55 @@ uart:
       delimiter: "\n"
     sequence:
       - lambda: UARTDebug::log_string(direction, bytes);
-      
+
+sensor:
+  - platform: uptime
+    id: uptime_sensor
+    type: seconds
+    name: Uptime Sensor
+    update_interval: 1s
+
+  - platform: template
+    name: "Light Source Usage Time"
+    id: light_source_usage_time
+    lambda: |-
+      if (id(power_switch).state) {
+        return id(viewsonic_projector_1).get_light_source_usage_time();
+      } else {
+        return NAN;
+      }
+    update_interval: 10s
+
+  
 viewsonic_projector_component:
   id: viewsonic_projector_1
+
+globals:
+  - id: last_state_change
+    type: int
+    restore_value: no
+    initial_value: '0'
+
+switch:
+  - platform: template
+    name: "Switch"
+    id: power_switch
+    lambda: |-
+      return id(viewsonic_projector_1).is_powered_on();
+    turn_on_action:
+      - lambda: |-
+          id(viewsonic_projector_1).power_on();
+          id(last_state_change) = id(uptime_sensor).state;
+    turn_off_action: 
+      - lambda: |-
+          id(viewsonic_projector_1).power_off();
+          id(last_state_change) = id(uptime_sensor).state;
+
+interval:
+  - interval: 10s
+    then:
+      - lambda: |-
+          if (id(last_state_change) + 100 > id(uptime_sensor).state) {
+            return;
+          }
+          id(power_switch).publish_state(id(viewsonic_projector_1).is_powered_on());

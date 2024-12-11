@@ -2,7 +2,7 @@
 
 #include "esphome/core/component.h"
 #include "esphome/components/uart/uart.h"
-#include <mutex>
+#include "esphome/core/helpers.h"
 #include <map>
 
 namespace esphome
@@ -30,7 +30,7 @@ namespace esphome
             int get_light_source_usage_time();
 
         private:
-            std::mutex uart_mutex_;
+            esphome::Mutex uart_mutex_;
             int _last_light_source_usage_time = -1;
             PowerState _last_power_state = PowerState::OFF;
             int _payload_length(const std::vector<uint8_t> &header);
