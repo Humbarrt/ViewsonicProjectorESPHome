@@ -23,7 +23,7 @@ namespace esphome
 
         void ViewsonicProjectorComponent::power_on()
         {
-            if (_send_write("0614000400341100005d"))
+            if (!_send_write("0614000400341100005d"))
             {
                 ESP_LOGE(TAG, "Error powering on");
                 return;
