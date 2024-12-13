@@ -38,12 +38,13 @@ namespace esphome
             std::vector<uint8_t> _send_packet(const std::string &query, bool &error);
             bool _send_write(const std::string &query);
             std::vector<uint8_t> _send_read(const std::string &query);
-            std::map<std::string, std::string> read_mapping = {
-                {"ON", "051400030000000017"},
-                {"OFF", "051400030000000118"},
-                {"WARM_UP", "051400030000000219"},
-                {"COOL_DOWN", "05140003000000031a"}};
+            void _reset_input_buffer();
+            bool _read_array(size_t num_bytes, uint8_t *data);
+            std::map<std::string, std::vector<uint8_t>> read_mapping = {
+                {"OFF", {0x05, 0x14, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x17}},
+                {"ON", {0x05, 0x14, 0x00, 0x03, 0x00, 0x00, 0x00, 0x01, 0x18}},
+                {"WARM_UP", {0x05, 0x14, 0x00, 0x03, 0x00, 0x00, 0x00, 0x02, 0x19}},
+                {"COOL_DOWN", {0x05, 0x14, 0x00, 0x03, 0x00, 0x00, 0x00, 0x03, 0x1a}}};
         };
-
-    } // namespace viewsonic_projector
-} // namespace esphome
+    }
+}

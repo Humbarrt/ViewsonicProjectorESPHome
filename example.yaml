@@ -48,13 +48,51 @@ globals:
     type: int
     restore_value: no
     initial_value: '0'
+  - id: last_light_source_usage_time
+    type: int
+    restore_value: yes
+    initial_value: '0'
+      
+uart:
+  baud_rate: 115200
+  tx_pin: 0
+  rx_pin: 1
+  debug:
+    direction: BOTH
+    dummy_receiver: false
+    after:
+      delimiter: "\n"
+    sequence:
+      - lambda: UARTDebug::log_string(direction, bytes);
+
+sensor:
+  - platform: uptime
+    id: uptime_sensor
+    type: seconds
+    update_interval: 1s
+    internal: true
+
+  - platform: template
+    name: "Light Source Usage Time"
+    id: light_source_usage_time
+    unit_of_measurement: "h"
+    icon: "mdi:clock-time-eight"
+    device_class: "duration"
+    accuracy_decimals: 0
+    lambda: |-
+      if (id(power_switch).state) {
+        id(last_light_source_usage_time) = id(viewsonic_projector_1).get_light_source_usage_time();
+        return id(last_light_source_usage_time);
+      } else {
+        return id(last_light_source_usage_time);
+      }
+    update_interval: 1min
 
 switch:
   - platform: template
     name: "Switch"
     id: power_switch
-    lambda: |-
-      return id(viewsonic_projector_1).is_powered_on();
+    optimistic: false
     turn_on_action:
       - lambda: |-
           id(viewsonic_projector_1).power_on();
@@ -65,10 +103,10 @@ switch:
           id(last_state_change) = id(uptime_sensor).state;
 
 interval:
-  - interval: 10s
+  - interval: 20s
     then:
       - lambda: |-
-          if (id(last_state_change) + 100 > id(uptime_sensor).state) {
+          if (id(uptime_sensor).state > id(last_state_change) + 100){
             return;
           }
           id(power_switch).publish_state(id(viewsonic_projector_1).is_powered_on());
